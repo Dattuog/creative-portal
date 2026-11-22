@@ -30,6 +30,11 @@ export const env = {
   shopifyClientId: () => v("SHOPIFY_CLIENT_ID"),
   shopifyClientSecret: () => v("SHOPIFY_CLIENT_SECRET"),
   shopifyApiVersion: () => v("SHOPIFY_API_VERSION") ?? "2026-10",
+  /**
+   * Dashboard order history: "live" reads every order from Shopify; "sample" keeps the
+   * sample history (Shopify dev stores only allow ~5 API-created orders a minute).
+   */
+  shopifyOrdersLive: () => env.shopifyLive() && v("SHOPIFY_ORDERS") !== "sample",
   shopifyLive: () =>
     !!(v("SHOPIFY_STORE_DOMAIN") && (v("SHOPIFY_ADMIN_TOKEN") || (v("SHOPIFY_CLIENT_ID") && v("SHOPIFY_CLIENT_SECRET")))),
 

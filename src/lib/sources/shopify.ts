@@ -175,3 +175,19 @@ export async function createShopifyOrder(input: {
   });
   if (data.orderCreate.userErrors.length) throw new Error(data.orderCreate.userErrors.map((e) => e.message).join("; "));
 }
+
+/* ---------- Connection proof: recent real orders from the store ---------- */
+
+const RECENT_Q = `query { orders(first: 5, sortKey: PROCESSED_AT, reverse: true) {
+  nodes {
+    id name createdAt processedAt test cancelledAt
+    currentTotalPriceSet { shopMoney { amount currencyCode } }
+    customAttributes { key value }
+    customerJourneySummary { lastVisit { utmParameters { source content } } }
+  }
+} }`;
+
+export async function fetchRecentShopifyOrders(accountTimezone: string) {
+  const data = await gql<{ orders: { nodes: ShopifyOrderNode[] } }>(RECENT_Q, {});
+  return data.orders.nodes.map((n) => ({ name: n.name, ...parseOrders([{ ...n, test: false, cancelledAt: null }], accountTimezone)[0] }));
+}

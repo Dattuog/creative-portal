@@ -54,8 +54,9 @@ export async function getViewer(): Promise<Viewer | null> {
   const sb = await supabaseUserClient();
   const { data } = await sb.auth.getUser();
   if (!data.user) return null;
-  const { data: p } = await sb.from("profiles").select("*").eq("user_id", data.user.id).maybeSingle();
-  if (!p) return null; // signed in but not provisioned: no access
+  const { data: p, error } = await sb.from("profiles").select("*").eq("user_id", data.user.id).maybeSingle();
+  if (error) console.error("profile lookup failed:", error.message);
+  if (!p) return null; // signed in but not provisioned (or no access): no access
   return { id: data.user.id, name: p.display_name, role: p.role, personName: p.person_name };
 }
 

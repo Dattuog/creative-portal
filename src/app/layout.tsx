@@ -46,17 +46,17 @@ async function navItems(viewer: Viewer | null): Promise<NavItem[]> {
 }
 
 function Sources() {
-  const rows = [
-    ["Meta", env.metaLive()],
-    ["Shopify", env.shopifyLive()],
-    ["Owners sheet", !!env.ownersCsvUrl()],
-  ] as const;
+  const rows: [string, boolean, string][] = [
+    ["Meta", env.metaLive(), env.metaLive() ? "Live" : "Sample data"],
+    ["Shopify", env.shopifyLive(), env.shopifyOrdersLive() ? "Live" : env.shopifyLive() ? "Connected" : "Sample data"],
+    ["Owners sheet", !!env.ownersCsvUrl(), env.ownersCsvUrl() ? "Live" : "Sample data"],
+  ];
   return (
     <dl className="flex flex-col gap-1 px-2 text-xs">
-      {rows.map(([k, live]) => (
+      {rows.map(([k, live, label]) => (
         <div key={k} className="flex justify-between">
           <dt className="text-muted-foreground">{k}</dt>
-          <dd className={live ? "text-positive" : "text-muted-foreground"}>{live ? "Live" : "Sample data"}</dd>
+          <dd className={live ? "text-positive" : "text-muted-foreground"}>{label}</dd>
         </div>
       ))}
     </dl>

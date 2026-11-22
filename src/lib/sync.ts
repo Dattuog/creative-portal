@@ -23,7 +23,7 @@ export async function runSync(store: Store, now = new Date()): Promise<SyncRun> 
   const settings = await store.getSettings();
   const mode = {
     meta: env.metaLive() ? "live" : "sample",
-    shopify: env.shopifyLive() ? "live" : "sample",
+    shopify: env.shopifyOrdersLive() ? "live" : "sample",
     sheet: env.ownersCsvUrl() ? "live" : "sample",
   } as SyncRun["mode"];
 

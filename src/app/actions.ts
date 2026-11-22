@@ -8,7 +8,7 @@ import { env } from "@/lib/env";
 import { runSync } from "@/lib/sync";
 import { runAgent } from "@/lib/agent/run";
 import { canDecide, decide } from "@/lib/agent/execute";
-import { seedShopify } from "@/lib/sample/seed-shopify";
+import { createShopifyOrder } from "@/lib/sources/shopify";
 
 export type ActionState = { ok: boolean; message: string } | null;
 
@@ -29,20 +29,27 @@ export async function syncNow(): Promise<ActionState> {
   return { ok: run.verified, message: run.verified ? "Synced and verified." : "Synced, but a critical data check failed." };
 }
 
-export async function seedShopifyNow(): Promise<ActionState> {
+export async function createTestOrderNow(): Promise<ActionState> {
   const viewer = await getViewer();
-  if (!viewer || viewer.role !== "admin") return { ok: false, message: "Only admins can load sample orders." };
+  if (!viewer || viewer.role !== "admin") return { ok: false, message: "Only admins can create test orders." };
+  if (!env.shopifyLive()) return { ok: false, message: "Shopify is not connected." };
   try {
-    const r = await seedShopify(await getStore());
+    const store = await getStore();
+    const [creatives, settings] = await Promise.all([store.getCreatives(viewer), store.getSettings()]);
+    const active = creatives.filter((c) => c.status === "ACTIVE");
+    const ad = active[Math.floor(Math.random() * active.length)] ?? creatives[0];
+    const cents = 2900 + Math.floor(Math.random() * 3000);
+    await createShopifyOrder({
+      totalMajor: `${Math.floor(cents / 100)}.${String(cents % 100).padStart(2, "0")}`,
+      currency: settings.currency,
+      processedAt: new Date().toISOString(),
+      utmSource: "facebook",
+      utmContent: ad?.adId,
+    });
     revalidatePath("/checks");
-    return {
-      ok: true,
-      message: r.remainingDays > 0
-        ? `Added ${r.created} orders. ${r.remainingDays} days left, run it again.`
-        : `Added ${r.created} orders. Shopify is filled through ${r.windowEnd}. Sync to see them.`,
-    };
+    return { ok: true, message: `Test order created in Shopify for ${ad?.adName ?? "an ad"}.` };
   } catch (e) {
-    return { ok: false, message: e instanceof Error ? e.message : "Could not load sample orders." };
+    return { ok: false, message: e instanceof Error ? e.message : "Could not create the order." };
   }
 }
 
