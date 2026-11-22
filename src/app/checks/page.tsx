@@ -1,9 +1,13 @@
+export const maxDuration = 300; // the Shopify sample-order loader runs as a server action here
+
 import { redirect } from "next/navigation";
 import { getStore, getViewer } from "@/lib/session";
 import { latestSync } from "@/lib/ensure";
 import { ago, int, money } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import { syncNow } from "../actions";
+import { seedShopifyNow, syncNow } from "../actions";
+import { env } from "@/lib/env";
+import { SEEDED_KEY } from "@/lib/sample/seed-shopify";
 import { RunButton } from "@/components/run-button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -29,6 +33,8 @@ export default async function ChecksPage() {
     );
   }
 
+  const seededThrough = await store.kvGet<string>(SEEDED_KEY);
+  const showSeed = viewer.role === "admin" && env.shopifyLive() && !env.metaLive() && seededThrough !== sync.windowEnd;
   const failed = sync.checks.filter((c) => c.critical && !c.passed).length;
   const warnings = sync.checks.filter((c) => !c.critical && !c.passed).length;
   const isMoney = (name: string) => name.startsWith("Meta spend");
@@ -48,7 +54,10 @@ export default async function ChecksPage() {
             {failed ? "A critical check failed." : warnings ? `Totals match the source. ${warnings} ${warnings === 1 ? "item" : "items"} to fix.` : "Totals match the source."}
           </p>
         </div>
-        {viewer.role === "admin" && <RunButton action={syncNow} label="Sync now" pendingLabel="Syncing" />}
+        <div className="flex gap-2">
+          {showSeed && <RunButton action={seedShopifyNow} label="Load sample orders into Shopify" pendingLabel="Loading orders" />}
+          {viewer.role === "admin" && <RunButton action={syncNow} label="Sync now" pendingLabel="Syncing" />}
+        </div>
       </div>
 
       {(sync.error || failed > 0) && (

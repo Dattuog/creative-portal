@@ -8,6 +8,7 @@ import { env } from "@/lib/env";
 import { runSync } from "@/lib/sync";
 import { runAgent } from "@/lib/agent/run";
 import { canDecide, decide } from "@/lib/agent/execute";
+import { seedShopify } from "@/lib/sample/seed-shopify";
 
 export type ActionState = { ok: boolean; message: string } | null;
 
@@ -26,6 +27,23 @@ export async function syncNow(): Promise<ActionState> {
   revalidatePath("/", "layout");
   if (run.error) return { ok: false, message: `Sync failed: ${run.error}` };
   return { ok: run.verified, message: run.verified ? "Synced and verified." : "Synced, but a critical data check failed." };
+}
+
+export async function seedShopifyNow(): Promise<ActionState> {
+  const viewer = await getViewer();
+  if (!viewer || viewer.role !== "admin") return { ok: false, message: "Only admins can load sample orders." };
+  try {
+    const r = await seedShopify(await getStore());
+    revalidatePath("/checks");
+    return {
+      ok: true,
+      message: r.remainingDays > 0
+        ? `Added ${r.created} orders. ${r.remainingDays} days left, run it again.`
+        : `Added ${r.created} orders. Shopify is filled through ${r.windowEnd}. Sync to see them.`,
+    };
+  } catch (e) {
+    return { ok: false, message: e instanceof Error ? e.message : "Could not load sample orders." };
+  }
 }
 
 export async function runAgentNow(): Promise<ActionState> {

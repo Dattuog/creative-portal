@@ -6,7 +6,8 @@ import { dateInTimezone, addDays } from "../time";
 export interface ShopifyOrderNode {
   id: string; // gid://shopify/Order/123
   name: string;
-  createdAt: string; // ISO UTC
+  createdAt: string; // ISO UTC, when the record was created in Shopify
+  processedAt?: string | null; // ISO UTC, when the sale happened (differs for imported orders)
   test: boolean;
   cancelledAt: string | null;
   currentTotalPriceSet: { shopMoney: { amount: string; currencyCode: string } };
@@ -46,8 +47,8 @@ export function parseOrders(nodes: ShopifyOrderNode[], accountTimezone: string):
       const [int, frac = ""] = money.amount.split(".");
       return {
         orderId: n.id.split("/").pop()!,
-        createdAt: n.createdAt,
-        date: dateInTimezone(n.createdAt, accountTimezone),
+        createdAt: n.processedAt ?? n.createdAt,
+        date: dateInTimezone(n.processedAt ?? n.createdAt, accountTimezone),
         totalMinor: Number(int) * 100 + Number((frac + "00").slice(0, 2)),
         currency: money.currencyCode,
         utmSource: source,
@@ -90,7 +91,7 @@ export function resetShopifyTokenCache() {
   cached = null;
 }
 
-async function gql<T>(query: string, variables: Record<string, unknown>): Promise<T> {
+async function gql<T>(query: string, variables: Record<string, unknown>, attempt = 0): Promise<T> {
   const url = `https://${env.shopifyDomain()}/admin/api/${env.shopifyApiVersion()}/graphql.json`;
   const res = await fetch(url, {
     method: "POST",
@@ -98,7 +99,12 @@ async function gql<T>(query: string, variables: Record<string, unknown>): Promis
     body: JSON.stringify({ query, variables }),
     cache: "no-store",
   });
-  const body = await res.json();
+  const body = await res.json().catch(() => ({}));
+  const throttled = res.status === 429 || JSON.stringify(body.errors ?? "").includes("THROTTLED");
+  if (throttled && attempt < 6) {
+    await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
+    return gql<T>(query, variables, attempt + 1);
+  }
   if (!res.ok || body.errors) throw new Error(`Shopify API: ${JSON.stringify(body.errors ?? res.status)}`);
   return body.data as T;
 }
@@ -107,7 +113,7 @@ const ORDERS_Q = `query($q: String!, $after: String) {
   orders(first: 250, after: $after, query: $q, sortKey: CREATED_AT) {
     pageInfo { hasNextPage endCursor }
     nodes {
-      id name createdAt test cancelledAt
+      id name createdAt processedAt test cancelledAt
       currentTotalPriceSet { shopMoney { amount currencyCode } }
       customAttributes { key value }
       customerJourneySummary { lastVisit { utmParameters { source content } } }
@@ -122,7 +128,8 @@ const COUNT_Q = `query($q: String!) { ordersCount(query: $q, limit: null) { coun
  * to the account-timezone window.
  */
 export async function fetchShopifyLive(start: string, end: string): Promise<ShopifySnapshotRaw> {
-  const q = `created_at:>=${addDays(start, -1)} created_at:<=${addDays(end, 1)}T23:59:59Z`;
+  // processed_at is the sale time; it differs from created_at for imported orders.
+  const q = `processed_at:>=${addDays(start, -1)} processed_at:<=${addDays(end, 1)}T23:59:59Z`;
   const orders: ShopifyOrderNode[] = [];
   let after: string | null = null;
   for (let page = 0; page < 40; page++) {
