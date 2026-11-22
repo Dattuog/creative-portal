@@ -1,0 +1,161 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * shadcn/ui tokens, set to the tasteskill "framed sheet" app style:
+ * stone frame (sidebar), white sheet, ink primary, one data hue (deep teal)
+ * used only on the main data element. Status colours are pale tints.
+ */
+:root {
+  --radius: 0.5rem;
+
+  --background: #ffffff;
+  --foreground: #131416;
+  --card: #ffffff;
+  --card-foreground: #131416;
+  --popover: #ffffff;
+  --popover-foreground: #131416;
+  --primary: #1d1f20;
+  --primary-foreground: #ffffff;
+  --secondary: #efeeeb;
+  --secondary-foreground: #2d2f30;
+  --muted: #f6f6f4;
+  --muted-foreground: #5d5f60;
+  --accent: #f1f0ed;
+  --accent-foreground: #131416;
+  --destructive: #c4242a;
+  --border: #e8e8e6;
+  --input: #d6d6d3;
+  --ring: #1b6c80;
+
+  --chart-1: #1b6c80; /* Shopify revenue: the main data element */
+  --chart-2: #d9d9d6; /* spend */
+  --chart-3: #131416;
+  --chart-4: #8f8f8c;
+  --chart-5: #b9b9b6;
+
+  --positive: #1e7b4f;
+  --positive-soft: #dcfae5;
+  --positive-foreground: #04250e;
+  --warning: #92400e;
+  --warning-soft: #fffbeb;
+  --warning-foreground: #92400e;
+  --destructive-soft: #ffedea;
+  --destructive-foreground: #831c1e;
+
+  --sidebar: #f4f3f0;
+  --sidebar-foreground: #131416;
+  --sidebar-primary: #1b6c80;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #e8e7e3;
+  --sidebar-accent-foreground: #131416;
+  --sidebar-border: #e8e8e6;
+  --sidebar-ring: #1b6c80;
+}
+
+.dark {
+  --background: #111111;
+  --foreground: #ffffff;
+  --card: #111111;
+  --card-foreground: #ffffff;
+  --popover: #171717;
+  --popover-foreground: #ffffff;
+  --primary: #ffffff;
+  --primary-foreground: #111111;
+  --secondary: #222222;
+  --secondary-foreground: #e5e5e5;
+  --muted: #1a1a1a;
+  --muted-foreground: #b4b4b4;
+  --accent: #222222;
+  --accent-foreground: #ffffff;
+  --destructive: #e5566f;
+  --border: #2e2e2e;
+  --input: #444444;
+  --ring: #5fb3c7;
+  --chart-1: #5fb3c7;
+  --chart-2: #3a3a3a;
+  --chart-3: #ffffff;
+  --chart-4: #949494;
+  --chart-5: #6b6b6b;
+  --positive: #3fc07a;
+  --positive-soft: #172a1d;
+  --positive-foreground: #3fc07a;
+  --warning: #f3c565;
+  --warning-soft: #2f260f;
+  --warning-foreground: #f3c565;
+  --destructive-soft: #2c1a20;
+  --destructive-foreground: #e5566f;
+  --sidebar: #000000;
+  --sidebar-foreground: #ffffff;
+  --sidebar-primary: #5fb3c7;
+  --sidebar-primary-foreground: #000000;
+  --sidebar-accent: #222222;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #1a1a1a;
+  --sidebar-ring: #5fb3c7;
+}
+
+@theme inline {
+  --font-sans: "IBM Plex Sans", Inter, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-soft: var(--destructive-soft);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-positive: var(--positive);
+  --color-positive-soft: var(--positive-soft);
+  --color-positive-foreground: var(--positive-foreground);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-sidebar text-foreground;
+    font-size: 14px;
+    line-height: 20px;
+  }
+}
+
+@utility num {
+  font-variant-numeric: tabular-nums;
+}
